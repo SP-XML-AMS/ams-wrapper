@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SPXML-INLINE-FORM>
+<OnInit PROPERTY="1" EXPR="
+    var logCode = 'AMS';
+    var version = undefined;
+    
+    EnableLog(logCode, true);
+
+    function main() {
+        log('INFO   ', ('Running AMS Wrapper'));
+
+        OpenCodeLibrary('system/libloader.bs').loadSelf();
+        ams.libloader.assignWrapper(OpenCodeLibrary('system/wrapper.bs'));
+
+        version = ams.wrapper.VERSION;
+        log('INFO   ', ('Version of AMS Wrapper (v' + version + ')'));
+
+        var oConfig = loadConfig();
+        loadDist(oConfig);
+
+        if (oConfig.origin.mode === 'standalone') {
+            // nothing to do
+            return;
+        }
+
+        if (oConfig.origin.mode === 'tester') {
+            startTester(oConfig);
+            return;
+        }
+
+        log('FATAL  ', ('Unknown mode (' + oAmsConfig.mode + ')'));
+    }
+ 
+    function loadDist(oConfig) {
+        var dist;
+        var distLibrary;
+        
+        dist = oConfig.origin.GetOptProperty('load_dist');
+        log('INFO   ', ('Starting AMS Distribution (v' + dist + ')'));
+        // alert(EncodeJson(oAppConfig_copy))
+
+        if (IsEmptyValue(dist)) {
+            log('FATAL  ', ('No distribution selected'));
+            log('INFO   ', ('Exiting.'));
+            return;
+        }
+        try {
+            distLibrary = OpenCodeLibrary(UrlAppendPath(UrlAppendPath('dists', dist), 'init.bs'));
+            ams.libloader.assignDist(distLibrary);
+            ams.dist.init(oConfig);
+
+            log('INFO   ', ('AMS Distribution successfully started'));
+            selectLastDist(oConfig.origin, dist)
+            return;
+        } catch (error) {
+            log('FATAL  ', ('Failed to register AMS Distribution: ' + error));
+        }
+
+        return;
+        log('INFO   ', ('Attempting to load fallback distribution'));
+
+        dist = oConfig.origin.GetOptProperty('last_dist');
+        log('INFO   ', ('Starting fallback AMS Distribution (' + dist + ') in \'standalone\' mode'));
+        // alert(EncodeJson(oAppConfig_copy))
+
+        if (IsEmptyValue(dist)) {
+            log('FATAL  ', ('No fallback distribution available'));
+            log('INFO   ', ('Exiting.'));
+            return;
+        }
+        try {
+            distLibrary = OpenCodeLibrary(UrlAppendPath(UrlAppendPath('dists', dist), 'init.bs'));
+            ams.libloader.assignDist(distLibrary);
+            ams.dist.init(oConfig);
+
+            log('INFO   ', ('AMS Distribution successfully started'));
+            selectLoadDist(oConfig.origin, dist)
+            return;
+        } catch (error) {
+            log('FATAL  ', ('Failed to register AMS Distribution: ' + error));
+        }
+
+        log('INFO   ', ('Exiting.'));
+    }
+
+    function startTester() {
+        throw 'Unsupported mode.';
+    }
+
+    function selectLoadDist(oConfig, sDist) {
+        oConfig.SetProperty('load_dist', sDist);
+        saveConfig(oConfig);
+    }
+
+    function selectLastDist(oConfig, sDist) {
+        oConfig.SetProperty('last_dist', sDist);
+        saveConfig(oConfig);
+    }
+
+    function loadConfig() {
+        var oOriginConfig = ParseJson(LoadUrlText('config.json'));
+
+        return {
+            'origin': oOriginConfig,
+            'dist': {
+                'log': {
+                    'name': 'AMS', //?
+                    'level': oOriginConfig.log_level
+                },
+                'request_handler_url': oOriginConfig.web_url
+            },
+            'env': {
+                'AMS_WRAPPER_VERSION': version,
+                'AMS_DIST_NAME': null
+            }
+        }
+    }
+
+    function saveConfig(oNewConfig) {
+        PutUrlText('config.json', EncodeJson(oNewConfig));
+    }
+
+    function log(sLevel, dyValue) {
+        alert(sLevel + '[' + logCode + '-WRAPPER]  ' + dyValue);
+        LogEvent(logCode, (sLevel + '[WRAPPER]  ' + dyValue));
+    }
+
+    main();
+"/>
+</SPXML-INLINE-FORM>

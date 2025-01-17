@@ -1,0 +1,8 @@
+﻿{
+    "mode": "standalone",
+    "load_dist": null,
+    "last_dist": null,
+    "log_name": "AMS",
+    "log_level": 0,
+    "web_url": "/ams"
+}

@@ -1,0 +1,63 @@
+﻿var VERSION = "{{VERSION}}";
+
+function installPackage(oParams) {
+
+}
+
+function uninstallPackage(sPackageKey) {
+
+}
+
+function loadPackage(sPackageKey) {
+    if (StrBegins(sPackageKey, "ams")) {
+        _loadAmsPackage(sPackageKey);
+        return;
+    }
+
+    if (StrBegins(sPackageKey, "module")) {
+        _loadModulePackage(sPackageKey)
+        return;
+    }
+
+    throw "Unknown package.";
+}
+
+function unloadPackage(sPackageKey) {
+    if (StrBegins(sPackageKey, "ams")) {
+
+        return;
+    }
+
+    if (StrBegins(sPackageKey, "module")) {
+
+        return;
+    }
+
+    throw "Unknown package.";
+}
+
+
+function test() {
+    alert("Hello test from ams.wrapper")
+}
+
+function _loadAmsPackage(sPackageKey) {
+    if (StrEquals(sPackageKey, "ams-wrapper")) {
+        // ams.libloader.assignWrapper(OpenCodeLibrary('system/wrapper.bs'));
+        return;
+    }
+    if (StrEquals(sPackageKey, "ams-libloader")) {
+        ams.libloader.loadSelf();
+        return;
+    }
+    if (StrEquals(sPackageKey, "ams-dist")) {
+        // ams.libloader.assignDist(distLibrary);
+        return;
+    }
+
+    throw "Unknown ams package.";
+}
+
+function _loadModulePackage(sPackageKey) {
+    ams.dist.loader.loadModule(sPackageKey);
+}

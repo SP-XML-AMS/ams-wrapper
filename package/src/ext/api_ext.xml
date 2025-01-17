@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<api_ext>
+	<apis>
+		<api>
+			<name>ams</name>
+			<libs>
+				<lib>
+					<path>{{ams_wrapper_url}}</path>
+				</lib>
+			</libs>
+		</api>
+	</apis>
+</api_ext>

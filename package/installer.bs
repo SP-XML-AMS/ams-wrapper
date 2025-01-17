@@ -1,0 +1,161 @@
+﻿// ams-wrapper
+
+/**
+ * {
+ *   "s_packageDirUrl": str   //
+ *   "s_locationDirUrl": str  //
+ * 
+ *   "s_packageDataDirUrl": str  //
+ * }
+ * @param oParams 
+ * @returns 
+ */
+function main(oParams) {
+    try {
+        if (!FileExists(oParams.s_locationDirUrl)) {
+            ObtainDirectory(oParams.s_locationDirUrl);
+        } else if (!IsDirectory(oParams.s_locationDirUrl)) {
+            withFail('location is not a directory');
+        }
+
+        oParams.s_packageDataDirUrl = UrlAppendPath(oParams.s_packageDirUrl, 'package');
+
+        installPackage(oParams);
+        lockPackage(oParams);
+
+        return ok(undefined);
+    } catch (err) {
+        return parseError(err);
+    }
+}
+
+function installPackage(oParams) {
+    installMain(oParams);
+    installSystem(oParams);
+    installConfig(oParams);
+    installExt(oParams);
+}
+
+function lockPackage(oParams) {
+    var s_lockFileUrl = UrlAppendPath(oParams.s_locationDirUrl, 'lock-ams.json');
+
+    var s_packageConfigFileUrl = UrlAppendPath(oParams.s_packageDirUrl, 'config.json');
+    var s_packageConfigContent;
+    try {
+        alert(s_packageConfigFileUrl);
+        s_packageConfigContent = ParseJson(LoadUrlData(s_packageConfigFileUrl));
+    } catch (err) {
+        withFail('Invalid package config.json: ' + err.message)
+    }
+    
+
+    var lock;
+    try {
+        lock = ParseJson(LoadFileText(s_lockFileUrl));
+    } catch (err) {
+        lock = {}
+    }
+
+    if (lock.HasProperty('packages')) {
+        lock.GetProperty('packages').push(s_packageConfigContent);
+    } else {
+        lock.SetProperty('packages', [s_packageConfigContent]);
+    }
+
+    PutUrlText(s_lockFileUrl, EncodeJson(lock));
+}
+
+function installExt(oParams) {
+    var sFrom = UrlToFilePath(UrlAppendPath(UrlAppendPath(oParams.s_packageDataDirUrl, 'ext'), 'api_ext.xml'));
+    var sTo = UrlToFilePath('x-local://source/api_ext.xml');
+
+    var sContent = LoadFileText(sFrom);
+    var sWrapperUrl = UrlAppendPath(oParams.s_locationDirUrl, 'wrapper.xml');
+    sContent = StrReplaceOne(sContent, '{{ams_wrapper_url}}', sWrapperUrl);
+
+    PutFileText(sTo, sContent);
+}
+
+function installMain(oParams) {
+    var sFrom = UrlToFilePath(UrlAppendPath(UrlAppendPath(oParams.s_packageDataDirUrl, 'main'), 'wrapper.xml'));
+    var sTo = UrlToFilePath(UrlAppendPath(oParams.s_locationDirUrl, 'wrapper.xml'));
+    CopyFile(sFrom, sTo);
+}
+
+function installSystem(oParams) {
+    var s_systemDirSourceUrl = UrlAppendPath(oParams.s_packageDataDirUrl, 'system');
+    var s_systemDirTargetUrl = UrlAppendPath(oParams.s_locationDirUrl, 'system');
+
+    ObtainDirectory(s_systemDirTargetUrl);
+
+    var s_wrapperFileSourceUrl = UrlToFilePath(UrlAppendPath(s_systemDirSourceUrl, 'wrapper.bs'));
+    var s_wrapperFileTargetUrl = UrlToFilePath(UrlAppendPath(s_systemDirTargetUrl, 'wrapper.bs'));
+    CopyFile(s_wrapperFileSourceUrl, s_wrapperFileTargetUrl);
+
+    var s_libloaderFileSourceUrl = UrlToFilePath(UrlAppendPath(s_systemDirSourceUrl, 'libloader.bs'));
+    var s_libloaderFileTargetUrl = UrlToFilePath(UrlAppendPath(s_systemDirTargetUrl, 'libloader.bs'));
+    CopyFile(s_libloaderFileSourceUrl, s_libloaderFileTargetUrl);
+}
+
+function installConfig(oParams) {
+    var sFrom = UrlToFilePath(UrlAppendPath(UrlAppendPath(oParams.s_packageDataDirUrl, 'config'), 'config.json'));
+    var sTo = UrlToFilePath(UrlAppendPath(oParams.s_locationDirUrl, 'config.json'));
+
+    function mergeConfigs(oExistsConfig, oNewConfig) {
+        var oResultConfig = ParseJson(EncodeJson(oNewConfig));
+
+        var oConfigItem;
+        for (oConfigItem in oExistsConfig) {
+            oResultConfig.SetProperty(oConfigItem, oExistsConfig.GetProperty(oConfigItem));
+        }
+
+        return oResultConfig;
+    }
+
+    if (FileExists(sTo)) {
+        try {
+            var oExistsConfig = ParseJson(LoadFileText(sTo));
+            var oNewConfig = ParseJson(LoadFileText(sFrom));
+
+            var oResultConfig = mergeConfigs(oExistsConfig, oNewConfig);
+            PutFileText(sTo, EncodeJson(oResultConfig));
+            return;
+        } catch (err) {
+            withFail(err)
+        }
+    }
+
+    CopyFile(sFrom, sTo);
+}
+
+function ok(value) {
+    return { 'error': false, 'value': value };
+}
+
+function fail(message) {
+    return { 'error': true, 'message': (message + '') };
+}
+
+function withFail(message) {
+    throw EncodeJson(fail(message));
+}
+
+function parseError(err) {
+    try {
+        return ParseJson(err.message);
+    } catch (_) {
+        return fail(err);
+    }
+}
+
+
+var result = main({
+    's_packageDirUrl': 'x-local://wt/check_installer/tmp/ams-wrapper',
+    's_locationDirUrl': 'x-local://wt/ams333'
+})
+
+if (result.error) {
+    alert("error: " + result.message)
+} else {
+    alert(1)
+}

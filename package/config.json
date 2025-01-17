@@ -1,0 +1,7 @@
+{
+    "requirements": {
+        "env/os": "any",
+        "env/db": "any",
+        "env/app": "any"
+    }
+}

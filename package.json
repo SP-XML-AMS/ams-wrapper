@@ -1,0 +1,15 @@
+{
+  "name": "ams-wrapper",
+  "version": "0.0.5",
+  "title": "AMS Wrapper",
+  "description": "",
+  "scripts": {
+    "clean": "node scripts/clean.js",
+    "pack": "node scripts/pack.js"
+  },
+  "author": "punkhomov",
+  "license": "MIT",
+  "dependencies": {
+    "archiver": "^7.0.1"
+  }
+}

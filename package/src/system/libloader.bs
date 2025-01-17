@@ -1,0 +1,113 @@
+﻿var libs = SafeObject();
+
+var sAmsNamespace = "ams";
+
+function loadSelf() {
+    if (GetOptCachedForm(sAmsNamespace) === undefined) {
+        var sFormData = "<?xml version=\"1.0\" encoding=\"utf-8\"?> \
+<SPXML-INLINE-FORM> \
+<" + sAmsNamespace + "> \
+	<wrapper PROPERTY=\"1\" EXPR=\" \
+		return refs.Value.GetProperty('wrapper'); \
+	\"/> \
+    <libloader PROPERTY=\"1\" EXPR=\" \
+		return refs.Value.GetProperty('libloader'); \
+	\"/> \
+    <dist PROPERTY=\"1\" EXPR=\" \
+		return refs.Value.GetProperty('dist'); \
+	\"/> \
+    <web PROPERTY=\"1\" EXPR=\" \
+		return refs.Value.GetProperty('web'); \
+	\"/> \
+    \
+    <refs TYPE=\"variant\" /> \
+</" + sAmsNamespace + "> \
+<OnInit PROPERTY=\"1\" EXPR=\" \
+    TopElem.refs.Value = SafeObject(); \
+    TopElem.refs.Value.SetProperty('wrapper', undefined) \
+    TopElem.refs.Value.SetProperty('libloader', OpenCodeLibrary('" + AbsoluteUrl("libloader.bs") + "')); \
+    TopElem.refs.Value.SetProperty('dist', undefined); \
+    TopElem.refs.Value.SetProperty('web', undefined); \
+\" /> \
+</SPXML-INLINE-FORM>";
+
+        var sTempFormFileUrl = _getTempFileUrl("tmp_" + sAmsNamespace + ".xmd");
+        PutUrlText(sTempFormFileUrl, sFormData);
+        RegisterSharedDoc(sTempFormFileUrl);
+        RegisterFormFromStr(sAmsNamespace, sFormData);
+    } else {
+        var container = eval(sAmsNamespace);
+        var oOldLibs = container.refs.Value.GetProperty("libloader").libs;
+        var newLibloader = OpenCodeLibrary(AbsoluteUrl("libloader.bs"));
+        newLibloader.libs = oOldLibs;
+        container.refs.Value.SetProperty("libloader", newLibloader);
+    }
+}
+
+function assignWrapper(anyValue) {
+    var container = eval(sAmsNamespace);
+    container.refs.Value.SetProperty("wrapper", anyValue);
+}
+
+function assignDist(anyValue) {
+    var container = eval(sAmsNamespace);
+    container.refs.Value.SetProperty("dist", anyValue);
+}
+
+function assignWeb(anyValue) {
+    var container = eval(sAmsNamespace);
+    container.refs.Value.SetProperty("web", anyValue);
+}
+
+function loadLib(sLibUrl, sNamespace) {
+    if (IsEmptyValue(sNamespace)) {
+        sNamespace = UrlFileName(sLibUrl);
+    }
+
+    libs.SetProperty(sNamespace, OpenCodeLibrary(sLibUrl));
+
+    if (GetOptCachedForm(sNamespace) === undefined) {
+        var sFormData = "\
+<?xml version=\"1.0\" encoding=\"utf-8\"?> \
+<SPXML-INLINE-FORM> \
+<" + sNamespace + "> \
+    <lib PROPERTY=\"1\" EXPR=\" \
+        return ams.libloader.libs.GetProperty('" + sNamespace + "') \
+    \"/> \
+</" + sNamespace + "> \
+</SPXML-INLINE-FORM>";
+
+        var sTempFormFileUrl = _getTempFileUrl("tmp_" + sNamespace + ".xmd");
+        PutUrlText(sTempFormFileUrl, sFormData);
+        RegisterSharedDoc(sTempFormFileUrl);
+        RegisterFormFromStr(sNamespace, sFormData);
+    }
+}
+
+function _getTempFileUrl(sFileName) {
+    if (IsEmptyValue(sFileName)) {
+        sFileName = _randomString(16);
+    }
+    return UrlAppendPath("x-local://wt/ams/temp/libloader", sFileName);
+}
+
+function _randomString(_digit_num, _dict) {
+    var _arr;
+    var _len;
+    try {
+        _arr = String(_dict);
+        _len = StrLen(_arr) - 1;
+    } catch (sd) {
+        _arr = String('qwertyuiopasdfghjklzxcvbnm1234567890');
+        _len = 35;
+    }
+
+    var _str = '';
+    var _ind;
+    for (i = 0; i < _digit_num; i++) {
+        _ind = Random(0, _len);
+        _str = _str + _arr.slice(_ind, _ind + 1);
+    }
+
+    return _str;
+}
