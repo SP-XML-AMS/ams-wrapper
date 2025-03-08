@@ -18,6 +18,8 @@ jobs:
 
       - name: Dispatch organization event
         uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.ORG_PAT }} # Используем PAT вместо стандартного токена
         with:
           script: |
             await github.request('POST /repos/{owner}/{repo}/dispatches', {
