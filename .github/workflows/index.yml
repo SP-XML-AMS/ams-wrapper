@@ -1,0 +1,27 @@
+name: Update Index Test
+
+on:
+  workflow_dispatch:  # Позволяет запускать workflow вручную
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Указываем операционную систему для запуска
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3  # Клонируем репозиторий
+
+      - name: Dispatch organization event
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.request({
+              method: 'POST',
+              url: '/orgs/{org}/dispatches',
+              org: '${{ github.repository_owner }}',
+              event_type: 'package_released',
+              client_payload: {
+                repository: '${{ github.repository }}',
+                tag: '${{ github.ref_name }}'
+              }
+            });
