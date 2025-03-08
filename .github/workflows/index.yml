@@ -11,23 +11,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3 # Клонируем репозиторий
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "20"
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: "20"
 
-      - name: Dispatch organization event
-        uses: actions/github-script@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.ORG_PAT }} # Используем PAT вместо стандартного токена
-        with:
-          script: |
-            await github.request('POST /repos/{owner}/{repo}/dispatches', {
-              owner: '${{ github.repository_owner }}',
-              repo: 'index',
-              event_type: 'package_released',
-              client_payload: {
-                repository: '${{ github.repository }}',
-                tag: '${{ github.ref_name }}'
-              }
-            });
+      # - name: Dispatch organization event
+      #   uses: actions/github-script@v6
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.ORG_PAT }} # Используем PAT вместо стандартного токена
+      #   with:
+      #     script: |
+      #       await github.request('POST /repos/{owner}/{repo}/dispatches', {
+      #         owner: '${{ github.repository_owner }}',
+      #         repo: 'index',
+      #         event_type: 'package_released',
+      #         client_payload: {
+      #           repository: '${{ github.repository }}',
+      #           tag: '${{ github.ref_name }}'
+      #         }
+      #       });
+
+      - name: Dispatch event
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.INDEX_ACCESS_TOKEN }}" \
+          https://api.github.com/repos/SP-XML-AMS/index/dispatches \
+          -d '{"event_type": "package_released", "client_payload": {"repository": "${{ github.repository }}", "tag": "${{ github.ref_name }}"}}'
