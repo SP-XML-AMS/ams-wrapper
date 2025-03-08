@@ -20,9 +20,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            await github.rest.request({
-              method: 'POST',
-              url: '/orgs/{org}/dispatches',
+            await github.request('POST /orgs/{org}/dispatches', {
               org: '${{ github.repository_owner }}',
               event_type: 'package_released',
               client_payload: {
