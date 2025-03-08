@@ -1,15 +1,20 @@
 name: Update Index Test
 
 on:
-  workflow_dispatch:  # Позволяет запускать workflow вручную
+  workflow_dispatch: # Позволяет запускать workflow вручную
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Указываем операционную систему для запуска
+    runs-on: ubuntu-latest # Указываем операционную систему для запуска
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3  # Клонируем репозиторий
+        uses: actions/checkout@v3 # Клонируем репозиторий
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
 
       - name: Dispatch organization event
         uses: actions/github-script@v6
